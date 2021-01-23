@@ -15,14 +15,39 @@ jobs:
     - name: Mv to folder
       run: |-
         cd IncidenciaAreas
-    - name: Fetch latest data
+    - name: Fetch latest data (area)
       run: |-
         curl -f "https://coronavirus.sergas.es/infodatos/"`date "+%Y-%m-%d"`"_COVID19_Web_CifrasTotais.csv" -o `date "+%Y-%m-%d"`"_CifrasTotales.csv"
-    - name: Commit and push if it changed
+    - name: Commit and push (area)
       run: |-
         git config user.name "Automated"
         git config user.email "actions@users.noreply.github.com"
         git add `date "+%Y-%m-%d"`"_CifrasTotales.csv"
+        timestamp=$(date -u)
+        git commit -m "Latest data: ${timestamp}" || exit 0
+        git push
+    - name: Fetch latest data (concello)
+      run: |-
+        curl -f -O https://coronavirus.sergas.es/datos/libs/hot-config/hot-config.txt
+        IDENTIFICADOR=`cat hot-config.txt | grep CASES_MAP | awk '{l=split($0,datos,"\""); print datos[4];}'`
+        echo ${IDENTIFICADOR}
+        curl -f -o mapa-covid.html https://datawrapper.dwcdn.net/${IDENTIFICADOR}/1/
+        nuevoFichero=`cat mapa-covid.html | grep REFRESH |  awk '{l=split($0,datos,"\"");l=split(datos[4],url,"=");print url[2];}'`
+        while [ -n "${nuevoFichero}" ]
+        do 
+          echo "Redireccion..."
+          echo "Se descarga el fichero de datos: ${nuevoFichero}"
+          rm mapa-covid.html
+          curl -f -o mapa-covid.html ${nuevoFichero}
+          nuevoFichero=`cat mapa-covid.html | grep REFRESH |  awk '{l=split($0,datos,"\"");l=split(datos[4],url,"=");print url[2];}'`
+          echo ${nuevoFichero}
+        done 
+        cat mapa-covid.html | grep chartData | sed 's/.*chartData//' | sed 's/isPreview.*//' | sed 's/\\\\r\\\\n/\n/g' | sed 's/\\\\\\\"//g' | sed 's/\\":\\"//g' | sed 's/\\u2264/<=/g' | sed 's/\\\u00D1/Ñ/g' | sed 's/\\u00FA/ú/g' | sed 's/\.//g' |awk -v fecha=${AYER} '{gsub("Sen novos casos diagnosticados no concello"," :0",$0); l=split($0,datos,",");l=split(datos[3],novos,":"); if (l>=2) { print fecha";"datos[1]";"datos[2]";"novos[2]";"datos[4]} else { print "Fecha;"datos[1]";"datos[2]";"datos[3]";"datos[4]}}' | sed \$d  > `date "+%Y%m%d"`"_incidencia_concello.csv"    
+    - name: Commit and push (concello)
+      run: |-
+        git config user.name "Automated"
+        git config user.email "actions@users.noreply.github.com"
+        git add `date "+%Y%m%d"`"_incidencia_concello.csv"
         timestamp=$(date -u)
         git commit -m "Latest data: ${timestamp}" || exit 0
         git push
