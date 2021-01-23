@@ -26,6 +26,9 @@ jobs:
         timestamp=$(date -u)
         git commit -m "Latest data: ${timestamp}" || exit 0
         git push
+    - name: Mv to folder
+      run: |-
+        cd ../IncidenciaConcellos        
     - name: Fetch latest data (concello)
       run: |-
         curl -f -O https://coronavirus.sergas.es/datos/libs/hot-config/hot-config.txt
