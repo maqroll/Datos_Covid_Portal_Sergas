@@ -18,7 +18,7 @@ jobs:
     - name: Fetch latest data (area)
       run: |-
         YESTERDAY=`awk 'BEGIN{print strftime("%Y-%m-%d", systime()-86400)}'`
-        curl -f "https://coronavirus.sergas.es/infodatos/"`date "+%Y-%m-%d"`"_COVID19_Web_CifrasTotais.csv" -o `echo ${YESTERDAY}`"_CifrasTotales.csv"
+        curl -f "https://coronavirus.sergas.es/infodatos/"`echo ${YESTERDAY}`"_COVID19_Web_CifrasTotais.csv" -o `echo ${YESTERDAY}`"_CifrasTotales.csv"
     - name: Commit and push (area)
       run: |-
         YESTERDAY=`awk 'BEGIN{print strftime("%Y-%m-%d", systime()-86400)}'`
